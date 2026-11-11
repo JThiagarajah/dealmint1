@@ -1,5 +1,5 @@
 import React, { useCallback, useLayoutEffect, useState } from 'react';
-import { View, Text, Pressable, Platform } from 'react-native';
+import { View, Text, Pressable, Platform, Linking } from 'react-native';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
@@ -259,7 +259,16 @@ export default function AssetDetailScreen({ route, navigation }) {
         <Line label="Bought on" value={prettyDate(a.purchase_date)} />
         {a.seller_name ? <Line label="Seller" value={a.seller_name} /> : null}
         {rent && a.tenant_name ? <Line label={a.type === 'Vehicle' ? 'Hired by' : 'Tenant'} value={a.tenant_name} /> : null}
-        {rent && a.tenant_phone ? <Line label="Tenant phone" value={a.tenant_phone} /> : null}
+        {rent && a.tenant_phone ? (
+          <Pressable onPress={() => callTenant(a.tenant_phone)} hitSlop={6}
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={[type.subhead, { color: c.text2 }]}>Tenant phone</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="call" size={15} color={c.green} />
+              <Text style={[type.subhead, { color: c.green, fontWeight: '600' }]}>{a.tenant_phone}</Text>
+            </View>
+          </Pressable>
+        ) : null}
         {rent && a.rent_start ? <Line label="Rent since" value={prettyDate(a.rent_start)} /> : null}
         {t.fields.map((f) => (a.details[f.key] ? (
           <Line key={f.key} label={f.label} value={f.numeric && f.key !== 'year' ? Number(a.details[f.key]).toLocaleString('en-US') : a.details[f.key]} />
@@ -280,6 +289,12 @@ export default function AssetDetailScreen({ route, navigation }) {
       </Pressable>
     </Screen>
   );
+}
+
+// Opens the phone dialer with the tenant's number
+function callTenant(phone) {
+  const number = String(phone).replace(/[^0-9+]/g, '');
+  Linking.openURL(`tel:${number}`).catch(() => {});
 }
 
 function Line({ label, value, bold, muted }) {
