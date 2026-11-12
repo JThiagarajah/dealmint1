@@ -2,13 +2,27 @@
 import React, { useState } from 'react';
 import { View, Text } from 'react-native';
 import { useTheme } from '../theme';
-import { Screen, Card, Segmented, Button } from '../components/ui';
+import { Screen, Card, Segmented, Button, Empty } from '../components/ui';
 import { ActivityRow, Loading, openMovement } from '../components/rows';
 import AddMenu from '../components/AddMenu';
 import { getLedger } from '../db/repo';
 import useFocusData from '../utils/useFocusData';
 import { useScope, SCOPE_TINT } from '../utils/scope';
 import { money, moneyShort, relativeDay, prettyDate } from '../utils/format';
+
+// What to show when there is nothing for the chosen filter
+const EMPTY = {
+  all: { icon: 'calendar-outline', title: 'No money movements yet', message: 'Everything you buy, spend, sell or receive in rent will appear here, day by day.', action: 'Add an expense', go: 'ExpenseForm' },
+  spent: { icon: 'receipt-outline', title: 'Nothing spent yet', message: 'Repairs, legal fees, fuel and other costs will appear here.', action: 'Add an expense', go: 'ExpenseForm' },
+  income: { icon: 'key-outline', title: 'No rent recorded yet', message: 'When a tenant pays, record it and it will appear here.', action: 'Record rent', go: 'IncomeForm' },
+  deals: { icon: 'swap-horizontal-outline', title: 'No purchases or sales yet', message: 'Assets you buy and sell will appear here.', action: 'Add an asset', go: 'AssetForm' },
+};
+
+function EmptyDaily({ filter, hasAny, navigation, scope }) {
+  const e = hasAny ? EMPTY[filter] : EMPTY.all;
+  const params = e.go === 'AssetForm' ? (scope !== 'All' ? { type: scope } : {}) : { scope };
+  return <Empty icon={e.icon} title={e.title} message={e.message} action={e.action} onAction={() => navigation.navigate(e.go, params)} />;
+}
 
 export default function LedgerScreen({ navigation }) {
   const { c, type } = useTheme();
@@ -59,9 +73,7 @@ export default function LedgerScreen({ navigation }) {
         />
       </View>
 
-      {days.length === 0 ? (
-        <Text style={[type.subhead, { color: c.text2, textAlign: 'center', marginTop: 40 }]}>Nothing recorded yet.</Text>
-      ) : null}
+      {days.length === 0 ? <EmptyDaily filter={filter} hasAny={data.days.length > 0} navigation={navigation} scope={scope} /> : null}
 
       {days.slice(0, limit).map((d) => (
         <View key={d.date} style={{ marginTop: 20 }}>

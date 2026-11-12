@@ -3,7 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
-import { Screen, Card, SectionHeader, Segmented, IconTile, haptic } from '../components/ui';
+import { Screen, Card, SectionHeader, Segmented, IconTile, Empty, haptic } from '../components/ui';
 import { Donut, BarList, TrendBars } from '../components/charts';
 import { Loading } from '../components/rows';
 import { getMonthReport, getMonthlyTrend, getOverallReport } from '../db/repo';
@@ -37,6 +37,21 @@ export default function ReportsScreen({ navigation }) {
   const isCurrent = ym.y === now.getFullYear() && ym.m === now.getMonth();
 
   if (!month || !overall) return <Loading />;
+
+  // No assets yet: nothing to report
+  if (overall.byType.length === 0) {
+    return (
+      <Screen title="Reports" subtitle={scope === 'All' ? null : TYPE_PLURAL[scope]}>
+        <Empty
+          icon="pie-chart-outline"
+          title="No reports yet"
+          message="Add an asset and its expenses. Your monthly profit, rent income and charts will appear here."
+          action="Add an asset"
+          onAction={() => navigation.navigate('AssetForm', scope !== 'All' ? { type: scope } : {})}
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen
